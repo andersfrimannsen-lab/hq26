@@ -105,18 +105,17 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, focus it.
-      if (clientList.length > 0) {
-        let client = clientList[0];
-        for (let i = 0; i < clientList.length; i++) {
-          if (clientList[i].focused) {
-            client = clientList[i];
-          }
+      for (const client of clientList) {
+        // We are looking for a client that is under the scope of the service worker.
+        // If it's found, focus it.
+        if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
+          return client.focus();
         }
-        return client.focus();
       }
-      // Otherwise, open a new window.
-      return clients.openWindow('/');
+      // If no client was found, open a new one.
+      if (clients.openWindow) {
+        return clients.openWindow(self.registration.scope);
+      }
     })
   );
 });
