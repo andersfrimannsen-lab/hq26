@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'hopeful-quotes-v15';
 const STATIC_ASSETS = [
     '/',
@@ -131,25 +132,28 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // This robustly handles focusing an existing app window or opening a new one.
+  // This more robustly finds and focuses an existing app window or opens a new one.
   event.waitUntil(
-    clients
-      .matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      })
-      .then((clientList) => {
-        // If a client is already open, focus it.
-        for (const client of clientList) {
-          if (client.url === '/' && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // If no client is open, open a new one.
-        if (clients.openWindow) {
-          return clients.openWindow('/');
-        }
-      })
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      // Find a visible client and focus it.
+      const visibleClient = clientList.find(client => client.visibilityState === 'visible');
+      if (visibleClient) {
+        return visibleClient.focus();
+      }
+      
+      // If no client is visible but one is open, focus the first one.
+      if (clientList.length > 0) {
+        return clientList[0].focus();
+      }
+      
+      // If no client is open, open a new one to the app's start URL.
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });
 
