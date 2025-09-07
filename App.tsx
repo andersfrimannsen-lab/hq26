@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import QuoteCard from './components/QuoteCard';
@@ -104,10 +105,15 @@ const App: React.FC = () => {
       <Header currentView={view} onNavigate={setView} />
 
       <main className="flex-grow flex flex-col items-center justify-center w-full z-10 px-4">
-        <div className="my-6 flex flex-col items-center justify-center gap-4 w-full">
+        {view === 'main' && (
+          <ActionButton onClick={fetchQuote} isLoading={isLoading} />
+        )}
+
+        <div className={`${view === 'main' ? 'mt-8 mb-6' : 'my-6'} flex flex-col items-center justify-center gap-4 w-full`}>
             <YoutubeCtaButton />
             <ShopBooksButton />
         </div>
+
         {view === 'main' ? (
           <>
             {error && <p className="text-red-400 mb-4 animate-fade-in">{error}</p>}
@@ -120,9 +126,6 @@ const App: React.FC = () => {
                 onToggleFavorite={() => toggleFavorite(quote)}
               />
             )}
-            
-            <ActionButton onClick={fetchQuote} isLoading={isLoading} />
-            
           </>
         ) : (
           <FavoritesView favorites={favorites} onToggleFavorite={toggleFavorite} />
