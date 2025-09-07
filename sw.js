@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v12';
+const CACHE_NAME = 'hopeful-quotes-v13';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -129,7 +129,7 @@ self.addEventListener('fetch', event => {
 
     // For navigation requests (loading the app) and the manifest, use a network-first strategy.
     // This ensures the user always has the latest version of the app shell and its configuration,
-    // while providing an offline fallback from the cache.
+    // while providing a robust offline fallback.
     if (request.mode === 'navigate' || url.pathname.endsWith('/manifest.json')) {
         event.respondWith(
             fetch(request)
@@ -144,7 +144,14 @@ self.addEventListener('fetch', event => {
                     return response;
                 })
                 .catch(() => {
-                    // Network failed? Serve from the cache.
+                    // Network failed? Check if it's a navigation request.
+                    if (request.mode === 'navigate') {
+                        console.log('Fetch for navigation failed. Serving app shell from cache.');
+                        // For navigation, always serve the main app page ('/') from the cache.
+                        // This is the key fix for offline media notification clicks.
+                        return caches.match('/');
+                    }
+                    // For other assets like the manifest, try matching the specific request.
                     return caches.match(request);
                 })
         );
