@@ -100,24 +100,61 @@ const AudioPlayer: React.FC = () => {
         setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
     };
     
-    const handleSkipBack = () => {
+    const handleSkipBack = React.useCallback(() => {
         if (playlist.length > 0) {
             setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + playlist.length) % playlist.length);
-            if (!isPlaying) {
+            if (audioRef.current?.paused) {
                 setIsPlaying(true);
             }
         }
-    };
+    }, [playlist.length]);
 
-    const handleSkip = () => {
+    const handleSkip = React.useCallback(() => {
         if (playlist.length > 0) {
             setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
-            // If paused, skipping to the next track should start playback for good UX
-            if (!isPlaying) {
+            if (audioRef.current?.paused) {
                 setIsPlaying(true);
             }
         }
-    };
+    }, [playlist.length]);
+
+    // Media Session API for background playback control
+    React.useEffect(() => {
+        if (!('mediaSession' in navigator) || playlist.length === 0) {
+            return;
+        }
+
+        const track = playlist[currentTrackIndex];
+        if (!track) return;
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title,
+            artist: 'Hopeful Quotes',
+            album: 'Relaxing Music',
+            artwork: [
+                { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+                { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+            ]
+        });
+        
+        const actionHandlers: [MediaSessionAction, MediaSessionActionHandler][] = [
+            ['play',         () => setIsPlaying(true)],
+            ['pause',        () => setIsPlaying(false)],
+            ['previoustrack', handleSkipBack],
+            ['nexttrack',     handleSkip],
+        ];
+
+        for (const [action, handler] of actionHandlers) {
+            try {
+                navigator.mediaSession.setActionHandler(action, handler);
+            } catch (error) {
+                console.warn(`The media session action "${action}" is not supported.`);
+            }
+        }
+        
+        navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+    }, [currentTrackIndex, isPlaying, playlist, handleSkip, handleSkipBack]);
 
     if (playlist.length === 0) {
         return null; // Don't render the player if there's no music
