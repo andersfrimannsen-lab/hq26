@@ -1,4 +1,5 @@
 
+
 const CACHE_NAME = 'hopeful-quotes-v15';
 const STATIC_ASSETS = [
     '/',
@@ -132,26 +133,25 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // This more robustly finds and focuses an existing app window or opens a new one.
+  // Construct the full URL to the app's root.
+  const appUrl = new URL('/', self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
     }).then((clientList) => {
-      // Find a visible client and focus it.
-      const visibleClient = clientList.find(client => client.visibilityState === 'visible');
-      if (visibleClient) {
-        return visibleClient.focus();
-      }
+      // Check if a window with the app's URL is already open.
+      const existingClient = clientList.find(client => client.url === appUrl);
       
-      // If no client is visible but one is open, focus the first one.
-      if (clientList.length > 0) {
-        return clientList[0].focus();
-      }
-      
-      // If no client is open, open a new one to the app's start URL.
-      if (clients.openWindow) {
-        return clients.openWindow('/');
+      if (existingClient) {
+        // If we found an open window, focus it.
+        return existingClient.focus();
+      } else {
+        // If we did not find an open window, open a new one.
+        if (clients.openWindow) {
+          return clients.openWindow('/');
+        }
       }
     })
   );
