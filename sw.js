@@ -105,17 +105,18 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        // We are looking for a client that is under the scope of the service worker.
-        // If it's found, focus it.
-        if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
-          return client.focus();
-        }
+      // If a window for the app is already open, focus it.
+      // We'll try to focus a visible client first.
+      const visibleClient = clientList.find(c => c.visibilityState === 'visible');
+      if (visibleClient) {
+        return visibleClient.focus();
       }
-      // If no client was found, open a new one.
-      if (clients.openWindow) {
-        return clients.openWindow(self.registration.scope);
+      // Otherwise, focus the first client in the list.
+      if (clientList.length > 0) {
+        return clientList[0].focus();
       }
+      // If no clients are open, open a new window.
+      return clients.openWindow('/');
     })
   );
 });

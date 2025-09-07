@@ -133,20 +133,11 @@ const AudioPlayer: React.FC = () => {
             ]
         });
         
-        const actionHandlers: [MediaSessionAction, MediaSessionActionHandler][] = [
-            ['play',         () => setIsPlaying(true)],
-            ['pause',        () => setIsPlaying(false)],
-            ['previoustrack', handleSkipBack],
-            ['nexttrack',     handleSkip],
-        ];
-
-        for (const [action, handler] of actionHandlers) {
-            try {
-                navigator.mediaSession.setActionHandler(action, handler);
-            } catch (error) {
-                console.warn(`The media session action "${action}" is not supported.`);
-            }
-        }
+        // Explicitly set all handlers every time for robustness
+        navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
+        navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
+        navigator.mediaSession.setActionHandler('previoustrack', handleSkipBack);
+        navigator.mediaSession.setActionHandler('nexttrack', handleSkip);
         
         navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
 
