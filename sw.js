@@ -39,6 +39,7 @@ function scheduleDailyNotification() {
       icon: '/icon-192x192.png',
       tag: 'daily-quote-notification', // Use a tag to ensure previous notifications are replaced
       renotify: true, // Vibrate/play sound even if a previous notification with the same tag exists
+      data: { url: '/' } // Explicitly set the URL to open
     });
 
     // Once the notification is shown, schedule the next one for the following day
@@ -95,7 +96,8 @@ self.addEventListener('message', (event) => {
         self.registration.showNotification('Notifications Enabled!', {
           body: 'Thank you for enabling notifications. You are all set!',
           icon: '/icon-192x192.png',
-          tag: 'welcome-notification'
+          tag: 'welcome-notification',
+          data: { url: '/' } // Explicitly set the URL to open
         })
       );
       break;
@@ -113,6 +115,7 @@ self.addEventListener('message', (event) => {
           tag: 'audio-player-notification',
           silent: true,
           requireInteraction: true,
+          data: { url: '/' } // Explicitly set the URL to open
         })
       );
       break;
@@ -133,21 +136,28 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // This more robust logic finds any open app window and focuses it.
   const openApp = async () => {
+    // The URL to navigate to when the app is opened or focused.
+    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+
     const clientList = await clients.matchAll({
       type: 'window',
       includeUncontrolled: true
     });
 
+    // If a window for the app is already open, focus it and navigate.
     if (clientList.length > 0) {
-      let clientToFocus = clientList.find(client => client.focused);
-      if (!clientToFocus) {
-        clientToFocus = clientList[0];
+      const client = clientList[0];
+      await client.focus();
+      // Navigate the existing window to ensure the user lands on the main page.
+      if ('navigate' in client) {
+        return client.navigate(urlToOpen);
       }
-      return clientToFocus.focus();
-    } else {
-      return clients.openWindow('/');
+    }
+
+    // If no client window is found, open a new one.
+    if (clients.openWindow) {
+      return clients.openWindow(urlToOpen);
     }
   };
 
