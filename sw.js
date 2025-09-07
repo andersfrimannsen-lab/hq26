@@ -102,24 +102,29 @@ self.addEventListener('message', (event) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
+  // Always close the notification when it's clicked.
   event.notification.close();
+
+  // Define the target URL. We want to bring the user to the main page of the app.
   const targetUrl = new URL('/', self.location.origin).href;
 
+  // Ensure the service worker doesn't terminate before the async operations are complete.
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Find a client to focus. Prioritize visible ones.
+      // Look for an existing window associated with the app to focus.
+      // This is a better UX than opening a new window every time.
       let clientToFocus = clientList.find(c => c.visibilityState === 'visible');
       if (!clientToFocus && clientList.length > 0) {
-          clientToFocus = clientList[0];
+        // If no window is visible, just take the first one in the list.
+        clientToFocus = clientList[0];
       }
 
       if (clientToFocus) {
-        // If we found a client, navigate it to the target URL and focus it.
-        // This ensures the user lands on the main page.
+        // If we found an existing window, navigate it to the main page and focus it.
         return clientToFocus.navigate(targetUrl).then(c => c.focus());
       }
 
-      // If no client is open, open a new one.
+      // If no window is open, open a new one.
       return clients.openWindow(targetUrl);
     })
   );
