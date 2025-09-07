@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import QuoteCard from './components/QuoteCard';
@@ -8,6 +6,7 @@ import FavoritesView from './components/FavoritesView';
 import YoutubeCtaButton from './components/YoutubeCtaButton';
 import ShopBooksButton from './components/ShopBooksButton';
 import AudioPlayer from './components/AudioPlayer';
+import GoToMainViewButton from './components/GoToMainViewButton';
 import { generateHopefulQuote } from './services/geminiService';
 import { loadFavorites, saveFavorites } from './services/favoriteService';
 import type { Quote } from './types';
@@ -132,8 +131,9 @@ const App: React.FC = () => {
         )}
       </main>
       
-      <div className="fixed bottom-4 right-4 z-20">
+      <div className="fixed bottom-4 right-4 z-20 flex items-end gap-2">
         <AudioPlayer />
+        <GoToMainViewButton currentView={view} onNavigate={setView} />
       </div>
 
     </div>
