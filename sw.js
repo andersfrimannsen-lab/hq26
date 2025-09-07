@@ -133,28 +133,25 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // Construct the full URL to the app's root.
-  const appUrl = new URL('/', self.location.origin).href;
-
-  event.waitUntil(
-    clients.matchAll({
+  // This more robust logic finds any open app window and focuses it.
+  const openApp = async () => {
+    const clientList = await clients.matchAll({
       type: 'window',
-      includeUncontrolled: true,
-    }).then((clientList) => {
-      // Check if a window with the app's URL is already open.
-      const existingClient = clientList.find(client => client.url === appUrl);
-      
-      if (existingClient) {
-        // If we found an open window, focus it.
-        return existingClient.focus();
-      } else {
-        // If we did not find an open window, open a new one.
-        if (clients.openWindow) {
-          return clients.openWindow('/');
-        }
+      includeUncontrolled: true
+    });
+
+    if (clientList.length > 0) {
+      let clientToFocus = clientList.find(client => client.focused);
+      if (!clientToFocus) {
+        clientToFocus = clientList[0];
       }
-    })
-  );
+      return clientToFocus.focus();
+    } else {
+      return clients.openWindow('/');
+    }
+  };
+
+  event.waitUntil(openApp());
 });
 
 
