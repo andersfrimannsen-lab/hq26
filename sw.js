@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v11';
+const CACHE_NAME = 'hopeful-quotes-v12';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -125,19 +125,22 @@ self.addEventListener('notificationclick', (event) => {
 // On fetch, use a more robust caching strategy
 self.addEventListener('fetch', event => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // For navigation requests (loading the app), use a network-first strategy.
-    // This ensures the user always has the latest version of the app shell,
+    // For navigation requests (loading the app) and the manifest, use a network-first strategy.
+    // This ensures the user always has the latest version of the app shell and its configuration,
     // while providing an offline fallback from the cache.
-    if (request.mode === 'navigate') {
+    if (request.mode === 'navigate' || url.pathname.endsWith('/manifest.json')) {
         event.respondWith(
             fetch(request)
                 .then(response => {
                     // Good response? Cache it and return it.
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
-                    });
+                    if (response.ok) {
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(request, responseToCache);
+                        });
+                    }
                     return response;
                 })
                 .catch(() => {
