@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v13';
+const CACHE_NAME = 'hopeful-quotes-v15';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -103,20 +103,24 @@ self.addEventListener('message', (event) => {
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = new URL('/', self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window for the app is already open, focus it.
-      // We'll try to focus a visible client first.
-      const visibleClient = clientList.find(c => c.visibilityState === 'visible');
-      if (visibleClient) {
-        return visibleClient.focus();
+      // Find a client to focus. Prioritize visible ones.
+      let clientToFocus = clientList.find(c => c.visibilityState === 'visible');
+      if (!clientToFocus && clientList.length > 0) {
+          clientToFocus = clientList[0];
       }
-      // Otherwise, focus the first client in the list.
-      if (clientList.length > 0) {
-        return clientList[0].focus();
+
+      if (clientToFocus) {
+        // If we found a client, navigate it to the target URL and focus it.
+        // This ensures the user lands on the main page.
+        return clientToFocus.navigate(targetUrl).then(c => c.focus());
       }
-      // If no clients are open, open a new window.
-      return clients.openWindow('/');
+
+      // If no client is open, open a new one.
+      return clients.openWindow(targetUrl);
     })
   );
 });
