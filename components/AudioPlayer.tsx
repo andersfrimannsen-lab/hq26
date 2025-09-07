@@ -80,26 +80,6 @@ const AudioPlayer: React.FC = () => {
         }
     }, [volume, isMuted, currentTrackIndex]); // Re-run when song changes to apply volume
     
-    // Effect to manage the companion player notification for reliable app opening
-    React.useEffect(() => {
-        const postPlayerMessage = (type: string) => {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type });
-            }
-        };
-
-        if (isPlaying) {
-            postPlayerMessage('SHOW_PLAYER_NOTIFICATION');
-        } else {
-            postPlayerMessage('CLEAR_PLAYER_NOTIFICATION');
-        }
-
-        // Cleanup on unmount
-        return () => {
-            postPlayerMessage('CLEAR_PLAYER_NOTIFICATION');
-        };
-    }, [isPlaying]);
-
     const togglePlayPause = () => {
         setIsPlaying(prev => !prev);
     };

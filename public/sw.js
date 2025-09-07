@@ -102,39 +102,33 @@ self.addEventListener('message', (event) => {
       console.log('Received command to start daily notification schedule.');
       scheduleDailyNotification();
       break;
-
-    case 'SHOW_PLAYER_NOTIFICATION':
-      event.waitUntil(
-        self.registration.showNotification('Playing Relaxing Music', {
-          body: 'Tap here to return to Hopeful Quotes.',
-          icon: '/icon-192x192.png',
-          tag: 'music-player-notification',
-          silent: true,
-          renotify: false
-        })
-      );
-      break;
-
-    case 'CLEAR_PLAYER_NOTIFICATION':
-      event.waitUntil(
-        self.registration.getNotifications({ tag: 'music-player-notification' })
-          .then(notifications => {
-            notifications.forEach(notification => notification.close());
-          })
-      );
-      break;
   }
 });
 
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
-  // Always close the notification when it's clicked.
   event.notification.close();
 
-  // This function is the most reliable way to focus an existing app window or open a new one.
+  // This robustly handles focusing an existing app window or opening a new one.
   event.waitUntil(
-    clients.openWindow('/').then(windowClient => windowClient ? windowClient.focus() : null)
+    clients
+      .matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      .then((clientList) => {
+        // If a client is already open, focus it.
+        for (const client of clientList) {
+          if (client.url === '/' && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If no client is open, open a new one.
+        if (clients.openWindow) {
+          return clients.openWindow('/');
+        }
+      })
   );
 });
 
