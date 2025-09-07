@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.netlify.app_68bd45c21d5d5800087428cc__beautiful_pithivier_4fe84f.twa",
+        "sha256_cert_fingerprints": ["1B:9E:BF:CA:B8:81:70:C8:3B:0F:F4:FA:8A:AE:03:26:95:9D:2F:2F:50:BB:CE:25:87:9F:CE:31:4D:95:32:36"]
+      }
+    }]
