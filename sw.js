@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v10';
+const CACHE_NAME = 'hopeful-quotes-v11';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
