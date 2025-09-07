@@ -103,18 +103,14 @@ const AudioPlayer: React.FC = () => {
     const handleSkipBack = React.useCallback(() => {
         if (playlist.length > 0) {
             setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + playlist.length) % playlist.length);
-            if (audioRef.current?.paused) {
-                setIsPlaying(true);
-            }
+            setIsPlaying(true);
         }
     }, [playlist.length]);
 
     const handleSkip = React.useCallback(() => {
         if (playlist.length > 0) {
             setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
-            if (audioRef.current?.paused) {
-                setIsPlaying(true);
-            }
+            setIsPlaying(true);
         }
     }, [playlist.length]);
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v9';
+const CACHE_NAME = 'hopeful-quotes-v10';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -121,24 +121,49 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 
-// On fetch, serve from cache or network
+// On fetch, use a more robust caching strategy
 self.addEventListener('fetch', event => {
     const { request } = event;
 
-    // All requests follow a cache-first strategy for performance and offline capability.
+    // For navigation requests (loading the app), use a network-first strategy.
+    // This ensures the user always has the latest version of the app shell,
+    // while providing an offline fallback from the cache.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    // Good response? Cache it and return it.
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, responseToCache);
+                    });
+                    return response;
+                })
+                .catch(() => {
+                    // Network failed? Serve from the cache.
+                    return caches.match(request);
+                })
+        );
+        return;
+    }
+
+    // For all other requests (assets like CSS, images, music), use a cache-first strategy.
+    // This is fast and efficient for static files that don't change often.
     event.respondWith(
         caches.match(request).then(cachedResponse => {
-            // Return cached response if found
             if (cachedResponse) {
+                // Return from cache if available.
                 return cachedResponse;
             }
-            // Fetch from network, then cache the new response
+
+            // Otherwise, fetch from the network.
             return fetch(request).then(networkResponse => {
-                // Check for a valid response to cache
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                // Don't cache unsuccessful responses or chrome extension requests.
+                if (!networkResponse || networkResponse.status !== 200 || request.url.startsWith('chrome-extension://')) {
                     return networkResponse;
                 }
 
+                // Cache the new response for future requests.
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
                     cache.put(request, responseToCache);
