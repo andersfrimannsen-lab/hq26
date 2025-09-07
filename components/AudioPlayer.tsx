@@ -80,6 +80,27 @@ const AudioPlayer: React.FC = () => {
         }
     }, [volume, isMuted, currentTrackIndex]); // Re-run when song changes to apply volume
     
+    // Effect for persistent service worker notification
+    React.useEffect(() => {
+        if (!('serviceWorker' in navigator)) {
+            return;
+        }
+
+        const postMessageToSw = (message: { type: string }) => {
+            navigator.serviceWorker.ready.then((registration) => {
+                if (registration.active) {
+                    registration.active.postMessage(message);
+                }
+            });
+        };
+
+        if (isPlaying) {
+            postMessageToSw({ type: 'SHOW_PLAYER_NOTIFICATION' });
+        } else {
+            postMessageToSw({ type: 'HIDE_PLAYER_NOTIFICATION' });
+        }
+    }, [isPlaying]);
+
     const togglePlayPause = () => {
         setIsPlaying(prev => !prev);
     };

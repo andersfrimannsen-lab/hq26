@@ -102,6 +102,27 @@ self.addEventListener('message', (event) => {
       console.log('Received command to start daily notification schedule.');
       scheduleDailyNotification();
       break;
+      
+    case 'SHOW_PLAYER_NOTIFICATION':
+      event.waitUntil(
+        self.registration.showNotification('Hopeful Quotes', {
+          body: 'Relaxing music is playing. Tap to return to the app.',
+          icon: '/icon-192x192.png',
+          tag: 'audio-player-notification',
+          silent: true,
+          requireInteraction: true,
+        })
+      );
+      break;
+
+    case 'HIDE_PLAYER_NOTIFICATION':
+      event.waitUntil(
+        self.registration.getNotifications({ tag: 'audio-player-notification' })
+          .then(notifications => {
+            notifications.forEach(notification => notification.close());
+          })
+      );
+      break;
   }
 });
 
