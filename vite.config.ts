@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
-    return {
-      // The define block for process.env.API_KEY has been removed
-      // as the API key is no longer needed on the client-side.
-    };
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'esbuild'
+  }
 });
+

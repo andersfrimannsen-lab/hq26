@@ -1,5 +1,3 @@
-
-
 const CACHE_NAME = 'hopeful-quotes-v15';
 const STATIC_ASSETS = [
     '/',
@@ -106,7 +104,7 @@ self.addEventListener('message', (event) => {
       console.log('Received command to start daily notification schedule.');
       scheduleDailyNotification();
       break;
-      
+
     case 'SHOW_PLAYER_NOTIFICATION':
       event.waitUntil(
         self.registration.showNotification('Hopeful Quotes', {
@@ -132,32 +130,62 @@ self.addEventListener('message', (event) => {
 });
 
 
-// Handle notification click
+// Handle notification click - ENHANCED VERSION
 self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event.notification.tag);
+  
+  // Close the notification
   event.notification.close();
 
   const openApp = async () => {
-    // The URL to navigate to when the app is opened or focused.
-    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+    try {
+      // The URL to navigate to when the app is opened or focused.
+      const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+      console.log('Attempting to open URL:', urlToOpen);
 
-    const clientList = await clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    });
+      // Get all client windows
+      const clientList = await clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      });
 
-    // If a window for the app is already open, focus it and navigate.
-    if (clientList.length > 0) {
-      const client = clientList[0];
-      await client.focus();
-      // Navigate the existing window to ensure the user lands on the main page.
-      if ('navigate' in client) {
-        return client.navigate(urlToOpen);
+      console.log('Found clients:', clientList.length);
+
+      // If a window for the app is already open, focus it
+      if (clientList.length > 0) {
+        let clientToFocus = clientList[0];
+        
+        // Try to find a focused client first
+        for (const client of clientList) {
+          if (client.focused) {
+            clientToFocus = client;
+            break;
+          }
+        }
+        
+        console.log('Focusing existing client');
+        await clientToFocus.focus();
+        
+        // Try to navigate the existing window to ensure the user lands on the main page
+        if ('navigate' in clientToFocus) {
+          console.log('Navigating existing client to:', urlToOpen);
+          return clientToFocus.navigate(urlToOpen);
+        }
+        
+        return clientToFocus;
       }
-    }
 
-    // If no client window is found, open a new one.
-    if (clients.openWindow) {
-      return clients.openWindow(urlToOpen);
+      // If no client window is found, open a new one
+      console.log('Opening new window');
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    } catch (error) {
+      console.error('Error in notification click handler:', error);
+      // Fallback: try to open a new window
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
     }
   };
 
@@ -227,3 +255,4 @@ self.addEventListener('fetch', event => {
         })
     );
 });
+

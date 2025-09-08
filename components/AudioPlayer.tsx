@@ -91,6 +91,8 @@ const AudioPlayer: React.FC = () => {
                 if (registration.active) {
                     registration.active.postMessage(message);
                 }
+            }).catch(error => {
+                console.error('Failed to send message to service worker:', error);
             });
         };
 
@@ -135,7 +137,7 @@ const AudioPlayer: React.FC = () => {
         }
     }, [playlist.length]);
 
-    // Media Session API for background playback control
+    // Enhanced Media Session API for background playback control and notification integration
     React.useEffect(() => {
         if (!('mediaSession' in navigator) || playlist.length === 0) {
             return;
@@ -144,25 +146,94 @@ const AudioPlayer: React.FC = () => {
         const track = playlist[currentTrackIndex];
         if (!track) return;
 
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: track.title,
-            artist: 'Hopeful Quotes',
-            album: 'Relaxing Music',
-            artwork: [
-                { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-                { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-            ]
-        });
-        
-        // Explicitly set all handlers every time for robustness
-        navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
-        navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
-        navigator.mediaSession.setActionHandler('previoustrack', handleSkipBack);
-        navigator.mediaSession.setActionHandler('nexttrack', handleSkip);
-        
-        navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+        try {
+            // Set metadata for the current track
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: 'Hopeful Quotes',
+                album: 'Relaxing Music',
+                artwork: [
+                    { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+                ]
+            });
+            
+            // Set playback state
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+            
+            // Clear existing handlers to avoid conflicts
+            navigator.mediaSession.setActionHandler('play', null);
+            navigator.mediaSession.setActionHandler('pause', null);
+            navigator.mediaSession.setActionHandler('previoustrack', null);
+            navigator.mediaSession.setActionHandler('nexttrack', null);
+            
+            // Set new handlers
+            navigator.mediaSession.setActionHandler('play', () => {
+                console.log('Media session play action');
+                setIsPlaying(true);
+            });
+            
+            navigator.mediaSession.setActionHandler('pause', () => {
+                console.log('Media session pause action');
+                setIsPlaying(false);
+            });
+            
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                console.log('Media session previous track action');
+                handleSkipBack();
+            });
+            
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                console.log('Media session next track action');
+                handleSkip();
+            });
+
+            console.log('Media session updated for track:', track.title);
+        } catch (error) {
+            console.error('Error setting up media session:', error);
+        }
 
     }, [currentTrackIndex, isPlaying, playlist, handleSkip, handleSkipBack]);
+
+    // Handle audio events for better integration
+    React.useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handlePlay = () => {
+            console.log('Audio started playing');
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "playing";
+            }
+        };
+
+        const handlePause = () => {
+            console.log('Audio paused');
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "paused";
+            }
+        };
+
+        const handleLoadStart = () => {
+            console.log('Audio loading started');
+        };
+
+        const handleCanPlay = () => {
+            console.log('Audio can play');
+        };
+
+        audio.addEventListener('play', handlePlay);
+        audio.addEventListener('pause', handlePause);
+        audio.addEventListener('loadstart', handleLoadStart);
+        audio.addEventListener('canplay', handleCanPlay);
+
+        return () => {
+            audio.removeEventListener('play', handlePlay);
+            audio.removeEventListener('pause', handlePause);
+            audio.removeEventListener('loadstart', handleLoadStart);
+            audio.removeEventListener('canplay', handleCanPlay);
+        };
+    }, [currentTrackIndex]);
 
     if (playlist.length === 0) {
         return null; // Don't render the player if there's no music
@@ -182,6 +253,7 @@ const AudioPlayer: React.FC = () => {
                 onEnded={handleTrackEnd}
                 loop={false}
                 key={currentTrackIndex}
+                preload="metadata"
             />
             
             <button onClick={handleSkipBack} className={buttonClasses} aria-label="Skip to previous track">
@@ -220,3 +292,4 @@ const AudioPlayer: React.FC = () => {
 };
 
 export default AudioPlayer;
+
