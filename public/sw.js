@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hopeful-quotes-v15';
+const CACHE_NAME = 'hopeful-quotes-v16';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -37,7 +37,7 @@ function scheduleDailyNotification() {
       icon: '/icon-192x192.png',
       tag: 'daily-quote-notification', // Use a tag to ensure previous notifications are replaced
       renotify: true, // Vibrate/play sound even if a previous notification with the same tag exists
-      data: { url: '/' } // Explicitly set the URL to open
+      data: { url: '/', action: 'open_app' } // Enhanced data for better handling
     });
 
     // Once the notification is shown, schedule the next one for the following day
@@ -95,7 +95,7 @@ self.addEventListener('message', (event) => {
           body: 'Thank you for enabling notifications. You are all set!',
           icon: '/icon-192x192.png',
           tag: 'welcome-notification',
-          data: { url: '/' } // Explicitly set the URL to open
+          data: { url: '/', action: 'open_app' } // Enhanced data for better handling
         })
       );
       break;
@@ -113,7 +113,7 @@ self.addEventListener('message', (event) => {
           tag: 'audio-player-notification',
           silent: true,
           requireInteraction: true,
-          data: { url: '/' } // Explicitly set the URL to open
+          data: { url: '/', action: 'open_app' } // Enhanced data for better handling
         })
       );
       break;
@@ -130,7 +130,7 @@ self.addEventListener('message', (event) => {
 });
 
 
-// Handle notification click - ENHANCED VERSION
+// Enhanced notification click handler for better PWA/native app integration
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event.notification.tag);
   
@@ -143,7 +143,7 @@ self.addEventListener('notificationclick', (event) => {
       const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
       console.log('Attempting to open URL:', urlToOpen);
 
-      // Get all client windows
+      // Get all client windows with enhanced options for PWA detection
       const clientList = await clients.matchAll({
         type: 'window',
         includeUncontrolled: true
@@ -151,40 +151,71 @@ self.addEventListener('notificationclick', (event) => {
 
       console.log('Found clients:', clientList.length);
 
-      // If a window for the app is already open, focus it
+      // Enhanced client detection and focusing
       if (clientList.length > 0) {
-        let clientToFocus = clientList[0];
+        // Sort clients by focus state and URL match
+        const sortedClients = clientList.sort((a, b) => {
+          // Prioritize focused clients
+          if (a.focused && !b.focused) return -1;
+          if (!a.focused && b.focused) return 1;
+          
+          // Prioritize clients with matching origin
+          const aMatches = a.url.startsWith(self.location.origin);
+          const bMatches = b.url.startsWith(self.location.origin);
+          if (aMatches && !bMatches) return -1;
+          if (!aMatches && bMatches) return 1;
+          
+          return 0;
+        });
         
-        // Try to find a focused client first
-        for (const client of clientList) {
-          if (client.focused) {
-            clientToFocus = client;
-            break;
-          }
-        }
+        const clientToFocus = sortedClients[0];
+        console.log('Focusing existing client:', clientToFocus.url);
         
-        console.log('Focusing existing client');
+        // Focus the client
         await clientToFocus.focus();
         
-        // Try to navigate the existing window to ensure the user lands on the main page
+        // For PWAs, try to navigate to ensure we're on the right page
         if ('navigate' in clientToFocus) {
-          console.log('Navigating existing client to:', urlToOpen);
-          return clientToFocus.navigate(urlToOpen);
+          try {
+            console.log('Navigating existing client to:', urlToOpen);
+            await clientToFocus.navigate(urlToOpen);
+          } catch (navError) {
+            console.log('Navigation failed, posting message instead:', navError);
+            // Fallback: send a message to the client to handle navigation
+            clientToFocus.postMessage({
+              type: 'NOTIFICATION_CLICK_NAVIGATE',
+              url: urlToOpen,
+              notificationTag: event.notification.tag
+            });
+          }
+        } else {
+          // Fallback: send a message to the client to handle navigation
+          clientToFocus.postMessage({
+            type: 'NOTIFICATION_CLICK_NAVIGATE',
+            url: urlToOpen,
+            notificationTag: event.notification.tag
+          });
         }
         
         return clientToFocus;
       }
 
       // If no client window is found, open a new one
-      console.log('Opening new window');
+      console.log('No existing clients found, opening new window');
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        const newClient = await clients.openWindow(urlToOpen);
+        console.log('Opened new window:', newClient ? 'success' : 'failed');
+        return newClient;
       }
     } catch (error) {
       console.error('Error in notification click handler:', error);
-      // Fallback: try to open a new window
+      // Ultimate fallback: try to open a new window with just the origin
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        try {
+          return await clients.openWindow(self.location.origin);
+        } catch (fallbackError) {
+          console.error('Fallback window opening also failed:', fallbackError);
+        }
       }
     }
   };

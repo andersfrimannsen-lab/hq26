@@ -1,0 +1,94 @@
+{
+  "name": "Hopeful Quotes For Mental Health",
+  "short_name": "Hopeful Quotes",
+  "lang": "en",
+  "description": "A Hopeful Quotes mental health support application that provides hopeful and inspiring quotes to help users through difficult times. It's a local app that works offline.",
+  "id": "andersfrimannschizophrenia",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "theme_color": "#8b5cf6",
+  "background_color": "#3730a3",
+  "iarc_rating_id": "PLEASE_OBTAIN_AND_REPLACE_WITH_YOUR_OWN_IARC_ID",
+  "categories": [
+    "health",
+    "books",
+    "medical",
+    "music",
+    "entertainment"
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-main.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x2640",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/mobile-music.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x2640",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/mobile.favorites.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x2640",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home",
+      "short_name": "Home",
+      "description": "Go to the main quote screen",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "short_name": "Favorites",
+      "description": "View your saved favorite quotes",
+      "url": "/?view=favorites",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "any",
+          "type": "any maskable",
+          "purpose": "any maskable"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
+  "capture_links": "existing-client-navigate"
+}
+
